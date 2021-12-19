@@ -1,0 +1,60 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  UI_FILES_LOCATION:
+    resources
+
+  PY_VIEW_LOCATION:
+    views
+
+  PY_RC_LOCATION:
+    .
+
+  UI_FILES: |
+    main_window.ui
+
+  RC_FILES:
+
+tasks:
+  ui:
+    cmds:
+      - |
+        {{ range $i, $file := trim .UI_FILES | splitLines }}
+        {{ $fileExt := osExt $file }}
+        {{ $fileName := trimSuffix $fileExt $file }}
+        {{ if ne $fileName "" }}
+        pyside6-uic{{ exeExt }} -o {{ $.PY_VIEW_LOCATION }}/{{ $fileName }}_ui.py {{ $.UI_FILES_LOCATION }}/{{ $fileName }}.ui
+        {{ end }}
+        {{ end }}
+
+    sources:
+      - |
+        {{ .UI_FILES_LOCATION }}/*.ui
+
+    generates:
+      - |
+        {{ .PY_VIEW_LOCATION }}/*_ui.py
+
+    deps: [ rc ]
+
+  rc:
+    cmds:
+      - |
+        {{ range $i, $file := trim .RC_FILES | splitLines }}
+        {{ $fileExt := osExt $file }}
+        {{ $fileName := trimSuffix $fileExt $file }}
+        {{ if ne $fileName "" }}
+        pyside6-rcc{{ exeExt}} -o {{ $.PY_RC_LOCATION }}/{{ $fileName}}_rc.py {{ $.UI_FILES_LOCATION }}/{{ $fileName }}.qrc
+        {{ end }}
+        {{ end }}
+
+    sources:
+      - |
+        {{ .PY_VIEW_LOCATION }}/*.qrc
+
+    generates:
+      - |
+        {{ .PY_RC_LOCATION }}/*_rc.py
+
