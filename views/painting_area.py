@@ -3,15 +3,17 @@ from typing import Optional
 from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QKeyEvent
 from PySide6.QtWidgets import QWidget
 
-from model import Circle, Storage
+from model import Ellipse, Storage, Shape
 
 __all__ = ("PaintingArea",)
+
+from model.rectangle import Rectangle
 
 
 class PaintingArea(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self._storage: Storage[Circle] = Storage()
+        self._storage: Storage[Shape] = Storage()
         self.setFocusPolicy(Qt.StrongFocus)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -31,7 +33,10 @@ class PaintingArea(QWidget):
             self._storage.next()
 
         if not flag:
-            c = Circle(x, y)
+            if event.button() == Qt.LeftButton:
+                c = Ellipse(x, y)
+            else:
+                c = Rectangle(x, y, 40, 40)
             c.selected = True
             self._storage.push_back(c)
 
@@ -57,5 +62,7 @@ class PaintingArea(QWidget):
         self._storage.first()
         while not self._storage.eol():
             c = self._storage.get_current()
+            painter.save()
             c.paint(painter)
+            painter.restore()
             self._storage.next()
