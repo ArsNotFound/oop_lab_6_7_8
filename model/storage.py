@@ -1,16 +1,40 @@
-import dataclasses
+from dataclasses import dataclass, field
 from typing import TypeVar, Generic, Optional
 
-__all__ = ("Node", "Storage")
+__all__ = ("Node", "Storage", "Iterator")
 
 T = TypeVar("T")
 
 
-@dataclasses.dataclass
+@dataclass(order=True)
 class Node(Generic[T]):
-    value: T
-    prev: Optional['Node'] = None
-    next: Optional['Node'] = None
+    value: T = field(compare=False)
+    priority: int = 0
+    prev: Optional['Node'] = field(compare=False, default=None)
+    next: Optional['Node'] = field(compare=False, default=None)
+
+
+class Iterator:
+    def __init__(self, storage: 'Storage', reverse: bool = False):
+        self._storage = storage
+        self._reverse = reverse
+        if not self._reverse:
+            self._storage.first()
+        else:
+            self._storage.last()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._storage.eol():
+            raise StopIteration
+        res = self._storage.get_current()
+        if not self._reverse:
+            self._storage.next()
+        else:
+            self._storage.prev()
+        return res
 
 
 class Storage(Generic[T]):
@@ -19,6 +43,12 @@ class Storage(Generic[T]):
         self._last: Optional[Node] = None
         self._current: Optional[Node] = None
         self._size = 0
+
+    def __iter__(self):
+        return Iterator(self)
+
+    def __reversed__(self):
+        return Iterator(self, True)
 
     def first(self) -> None:
         self._current = self._first
@@ -88,53 +118,28 @@ class Storage(Generic[T]):
 
         return v
 
-    def push_back(self, value: T) -> None:
-        node = Node(value)
-        if self._last:
-            self._last.next = node
-            node.prev = self._last
-            self._current = self._last = node
-        else:
-            self._current = self._last = self._first = node
-
-    def push_front(self, value: T) -> None:
-        node = Node(value)
-        if self._first:
-            self._first.prev = node
-            node.next = self._first
-            self._current = self._first = node
-        else:
-            self._current = self._last = self._first = node
-
-    def push_after(self, value: T) -> None:
-        if not self._current:
-            self.push_back(value)
+    def push(self, value: T, priority=0):
+        node = Node(value, priority)
+        if not self._first:
+            self._current = self._first = self._last = node
             return
 
-        node = Node(value)
+        if priority > self._first.priority:
+            node.next = self._first
+            self._first.prev = node
+            self._first = node
 
-        node.next = self._current.next
-        node.prev = self._current
+        elif priority <= self._last.priority:
+            self._last.next = node
+            node.prev = self._last
+            self._last = node
 
-        if self._current.next:
-            self._current.next.prev = node
-
-        self._current.next = node
-
-        self._current = node
-
-    def push_before(self, value: T) -> None:
-        if not self._current:
-            self.push_front(value)
-
-        node = Node(value)
-
-        node.next = self._current
-        node.prev = self._current.prev
-
-        if self._current.prev:
-            self._current.prev.next = node
-
-        self._current.prev = node
-
-        self._current = node
+        else:
+            curr = self._first
+            while curr.priority <= priority:
+                curr = curr.next
+            if curr.prev:
+                curr.prev.next = node
+                node.prev = curr.prev.next
+            node.next = curr.prev
+            curr.prev = node.next

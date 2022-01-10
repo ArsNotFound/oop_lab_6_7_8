@@ -1,34 +1,49 @@
 from abc import ABC, abstractmethod
 
-from PySide6.QtGui import QPainter, QColor, Qt, QBrush, QPen, QPixmap
+from PySide6.QtGui import QPainter, QColor, Qt, QBrush, QPen, QPixmap, QPainterPath
 
 __all__ = ("Shape",)
 
 
 class Shape(ABC):
-    _default_border_color = QColor(Qt.black)
-    _default_background_color = QColor(Qt.lightGray)
-
-    _selected_border_color = QColor(Qt.darkBlue)
-    _selected_background_color = QColor(Qt.transparent)
-
-    _default_pen = QPen(_default_border_color)
-    _default_brush = QBrush(_default_background_color)
-
-    _selected_pen = QPen(_selected_border_color, 1.25, Qt.DotLine)
-    _selected_brush = QBrush(_selected_background_color)
-
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, w: int, h: int):
         self._x = x
         self._y = y
+        self._w = w
+        self._h = h
         self._selected = False
+
+        self._default_border_color = QColor(Qt.black)
+        self._default_background_color = QColor(Qt.lightGray)
+
+        self._selected_border_color = QColor(Qt.darkBlue)
+        self._selected_background_color = QColor(Qt.transparent)
+
+        self._default_pen = QPen(self._default_border_color)
+        self._default_brush = QBrush(self._default_background_color)
+
+        self._selected_pen = QPen(self._selected_border_color, 1.25, Qt.DotLine)
+        self._selected_brush = QBrush(self._selected_background_color)
+
+    def inside_selection(self, x: int, y: int) -> bool:
+        return self.inside(x, y) or self._selected and 0 <= x - self._x <= self._w and 0 <= y - self._y <= self._h
+
+    def paint(self, painter: QPainter):
+        painter.setPen(self._default_pen)
+        painter.setBrush(self._default_brush)
+        painter.drawPath(self.shape())
+
+        if self._selected:
+            painter.setPen(self._selected_pen)
+            painter.setBrush(self._selected_brush)
+            painter.drawRect(self._x - self._w // 2, self._y - self._h // 2, self._w, self._h)
 
     @abstractmethod
     def inside(self, x: int, y: int) -> bool:
         pass
 
     @abstractmethod
-    def paint(self, painter: QPainter):
+    def shape(self) -> QPainterPath:
         pass
 
     @staticmethod
@@ -64,6 +79,22 @@ class Shape(ABC):
     @y.setter
     def y(self, y: int):
         self._y = y
+
+    @property
+    def w(self) -> int:
+        return self._w
+
+    @w.setter
+    def w(self, value: int):
+        self._w = value
+
+    @property
+    def h(self) -> int:
+        return self._h
+
+    @h.setter
+    def h(self, value: int):
+        self._h = value
 
     @property
     def default_border_color(self) -> QColor:
