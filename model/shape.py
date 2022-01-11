@@ -6,11 +6,12 @@ __all__ = ("Shape",)
 
 
 class Shape(ABC):
-    def __init__(self, x: int, y: int, w: int, h: int):
+    def __init__(self, x: int, y: int, w: int, h: int, a: float):
         self._x = x
         self._y = y
         self._w = w
         self._h = h
+        self._a = a
         self._selected = False
 
         self._default_border_color = QColor(Qt.black)
@@ -29,6 +30,9 @@ class Shape(ABC):
         return self.inside(x, y) or self._selected and 0 <= x - self._x <= self._w and 0 <= y - self._y <= self._h
 
     def paint(self, painter: QPainter):
+        painter.translate(self._x, self._y)
+        painter.rotate(self._a)
+
         painter.setPen(self._default_pen)
         painter.setBrush(self._default_brush)
         painter.drawPath(self.shape())
@@ -36,7 +40,7 @@ class Shape(ABC):
         if self._selected:
             painter.setPen(self._selected_pen)
             painter.setBrush(self._selected_brush)
-            painter.drawRect(self._x - self._w // 2, self._y - self._h // 2, self._w, self._h)
+            painter.drawRect(-self._w // 2, -self._h // 2, self._w, self._h)
 
     @abstractmethod
     def inside(self, x: int, y: int) -> bool:
@@ -95,6 +99,14 @@ class Shape(ABC):
     @h.setter
     def h(self, value: int):
         self._h = value
+
+    @property
+    def a(self) -> float:
+        return self._a
+
+    @a.setter
+    def a(self, value: float):
+        self._a = value
 
     @property
     def default_border_color(self) -> QColor:

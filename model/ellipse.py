@@ -11,7 +11,7 @@ class Ellipse(Shape):
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
-        path.addEllipse(self._x - self._w // 2, self._y - self._h // 2, self._w, self._h)
+        path.addEllipse(-self._w // 2, -self._h // 2, self._w, self._h)
         return path
 
     @staticmethod

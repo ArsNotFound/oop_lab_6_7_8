@@ -12,7 +12,7 @@ class Rectangle(Shape):
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
-        path.addRect(self.rect)
+        path.addRect(QRect(-self._w // 2,  -self._h // 2, self._w, self._h))
         return path
 
     @property

@@ -107,22 +107,37 @@ class PaintingArea(QWidget):
         if increased_step:
             dx *= 10
             dy *= 10
-        self._change_selected(dx, dy, 0, 0)
+        self._change_selected(dx, dy, 0, 0, 0)
 
     def resize_selected(self, direction: Direction, increased_step: bool = False):
         *_, dw, dh = direction.value
         if increased_step:
             dw *= 10
             dh *= 10
-        self._change_selected(0, 0, dw, dh)
+        self._change_selected(0, 0, dw, dh, 0)
 
-    def _change_selected(self, dx: int, dy: int, dw: int, dh: int):
+    def rotate_selected(self, direction: Direction, increased_step: bool = False):
+        da = 0
+        if direction == self.Direction.LEFT:
+            da = -5
+        elif direction == self.Direction.RIGHT:
+            da = 5
+        else:
+            return
+
+        if increased_step:
+            da *= 3
+
+        self._change_selected(0, 0, 0, 0, da)
+
+    def _change_selected(self, dx: int, dy: int, dw: int, dh: int, da: float):
         for shape in self._storage:
             if shape.selected:
                 shape.x += dx
                 shape.y += dy
                 shape.w += dw
                 shape.h += dh
+                shape.a += da
 
                 if not self.inside_area(shape.x - shape.w // 2, shape.y - shape.h // 2) or \
                         not self.inside_area(shape.x + shape.w // 2, shape.y + shape.h / 2):
@@ -130,6 +145,7 @@ class PaintingArea(QWidget):
                     shape.y -= dy
                     shape.w -= dw
                     shape.h -= dh
+                    shape.a -= da
 
         self.update()
 
@@ -155,7 +171,7 @@ class PaintingArea(QWidget):
                         shape.selected = False
 
             case self.Mode.INSERT_ITEM:
-                shape = self._current_shape(x, y, 40, 40)
+                shape = self._current_shape(x, y, 40, 40, 0)
 
                 if shape.x < shape.w // 2:
                     shape.x = shape.w // 2
@@ -199,7 +215,7 @@ class PaintingArea(QWidget):
                 break
 
         if inside_selected:
-            self._change_selected(dx, dy, 0, 0)
+            self._change_selected(dx, dy, 0, 0, 0)
 
     def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)

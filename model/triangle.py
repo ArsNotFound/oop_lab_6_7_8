@@ -11,8 +11,16 @@ class Triangle(Shape):
         return self.polygon.containsPoint(QPoint(x, y), Qt.FillRule.OddEvenFill)
 
     def shape(self) -> QPainterPath:
+        p0 = QPoint(-self.w // 2, self.h // 2)
+        p1 = QPoint(self.w // 2, self.h // 2)
+        p2 = QPoint(0, -self.h // 2)
+
+        polygon = QPolygon()
+
+        polygon << p0 << p1 << p2 << p0
+
         path = QPainterPath()
-        path.addPolygon(self.polygon)
+        path.addPolygon(polygon)
 
         return path
 

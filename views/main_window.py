@@ -118,6 +118,13 @@ class MainWindow(QMainWindow):
                 case Qt.Key_Right:
                     self._area.resize_selected(PaintingArea.Direction.RIGHT, ctrl)
 
+        elif event.modifiers() & Qt.AltModifier:
+            match event.key():
+                case Qt.Key_Left:
+                    self._area.rotate_selected(PaintingArea.Direction.LEFT, ctrl)
+                case Qt.Key_Right:
+                    self._area.rotate_selected(PaintingArea.Direction.RIGHT, ctrl)
+
         else:
             match event.key():
                 case Qt.Key_Up:
