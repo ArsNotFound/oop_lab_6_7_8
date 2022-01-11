@@ -2,7 +2,7 @@ import functools
 from typing import Type, Callable, Union
 
 from PySide6.QtCore import Slot, QSize, QRect
-from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter
+from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, QAbstractButton, QToolButton, \
     QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu
 
@@ -48,6 +48,8 @@ class MainWindow(QMainWindow):
 
         widget = QWidget()
         widget.setLayout(layout)
+        widget.setMinimumSize(800, 600)
+        self.setFocusPolicy(Qt.StrongFocus)
 
         self.setCentralWidget(widget)
         self.setWindowTitle("OOP LAB 6")
@@ -102,6 +104,32 @@ class MainWindow(QMainWindow):
 
         ids = self._button_group.id(button)
         self._set_insert_mode(self._shapes_id[ids])
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        ctrl = bool(event.modifiers() & Qt.ControlModifier)
+        if event.modifiers() & Qt.ShiftModifier:
+            match event.key():
+                case Qt.Key_Up:
+                    self._area.resize_selected(PaintingArea.Direction.UP, ctrl)
+                case Qt.Key_Down:
+                    self._area.resize_selected(PaintingArea.Direction.DOWN, ctrl)
+                case Qt.Key_Left:
+                    self._area.resize_selected(PaintingArea.Direction.LEFT, ctrl)
+                case Qt.Key_Right:
+                    self._area.resize_selected(PaintingArea.Direction.RIGHT, ctrl)
+
+        else:
+            match event.key():
+                case Qt.Key_Up:
+                    self._area.move_selected(PaintingArea.Direction.UP, ctrl)
+                case Qt.Key_Down:
+                    self._area.move_selected(PaintingArea.Direction.DOWN, ctrl)
+                case Qt.Key_Left:
+                    self._area.move_selected(PaintingArea.Direction.LEFT, ctrl)
+                case Qt.Key_Right:
+                    self._area.move_selected(PaintingArea.Direction.RIGHT, ctrl)
+
+        super().keyPressEvent(event)
 
     def _create_tool_box(self):
         self._button_group = QButtonGroup(self)

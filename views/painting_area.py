@@ -15,6 +15,12 @@ class PaintingArea(QWidget):
         EDIT_ITEM = enum.auto()
         INSERT_ITEM = enum.auto()
 
+    class Direction(enum.Enum):
+        UP = (0, -1, 0, 1)
+        DOWN = (0, 1, 0, -1)
+        LEFT = (-1, 0, -1, 0)
+        RIGHT = (1, 0, 1, 0)
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self._storage: Storage[Shape] = Storage()
@@ -96,6 +102,37 @@ class PaintingArea(QWidget):
 
         self.update()
 
+    def move_selected(self, direction: Direction, increased_step: bool = False):
+        dx, dy, *_ = direction.value
+        if increased_step:
+            dx *= 10
+            dy *= 10
+        self._change_selected(dx, dy, 0, 0)
+
+    def resize_selected(self, direction: Direction, increased_step: bool = False):
+        *_, dw, dh = direction.value
+        if increased_step:
+            dw *= 10
+            dh *= 10
+        self._change_selected(0, 0, dw, dh)
+
+    def _change_selected(self, dx: int, dy: int, dw: int, dh: int):
+        for shape in self._storage:
+            if shape.selected:
+                shape.x += dx
+                shape.y += dy
+                shape.w += dw
+                shape.h += dh
+
+                if not self.inside_area(shape.x - shape.w // 2, shape.y - shape.h // 2) or \
+                        not self.inside_area(shape.x + shape.w // 2, shape.y + shape.h / 2):
+                    shape.x -= dx
+                    shape.y -= dy
+                    shape.w -= dw
+                    shape.h -= dh
+
+        self.update()
+
     def inside_area(self, x: int, y: int) -> bool:
         return 0 <= x <= self.width() and 0 <= y <= self.height()
 
@@ -162,16 +199,7 @@ class PaintingArea(QWidget):
                 break
 
         if inside_selected:
-            for shape in self._storage:
-                if shape.selected:
-                    shape.x += dx
-                    shape.y += dy
-                    if not self.inside_area(shape.x - shape.w // 2, shape.y - shape.h // 2) or \
-                            not self.inside_area(shape.x + shape.w // 2, shape.y + shape.h / 2):
-                        shape.x -= dx
-                        shape.y -= dy
-
-        self.update()
+            self._change_selected(dx, dy, 0, 0)
 
     def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
