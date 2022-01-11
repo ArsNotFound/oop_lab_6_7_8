@@ -26,5 +26,6 @@ class Ellipse(Shape):
         painter = QPainter(pixmap)
         painter.setPen(QPen(Qt.black, 10))
         painter.drawEllipse(10, 10, 230, 230)
+        painter.end()
 
         return pixmap

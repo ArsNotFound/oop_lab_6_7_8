@@ -1,3 +1,4 @@
+from PySide6.QtCore import QRect
 from PySide6.QtGui import QPainter, QPixmap, Qt, QPen, QPainterPath
 
 from .shape import Shape
@@ -7,12 +8,16 @@ __all__ = ("Rectangle",)
 
 class Rectangle(Shape):
     def inside(self, x: int, y: int) -> bool:
-        return -abs(self._w / 2) <= x - self._x <= abs(self._w / 2) and -abs(self._h / 2) <= y - self._y <= abs(self._h / 2)
+        return self.rect.contains(x, y)
 
     def shape(self) -> QPainterPath:
         path = QPainterPath()
-        path.addRect(self._x - self._w // 2, self._y - self._h // 2, self._w, self._h)
+        path.addRect(self.rect)
         return path
+
+    @property
+    def rect(self) -> QRect:
+        return QRect(self._x - self._w // 2, self._y - self._h // 2, self._w, self._h)
 
     @staticmethod
     def name() -> str:
@@ -26,5 +31,6 @@ class Rectangle(Shape):
         painter = QPainter(pixmap)
         painter.setPen(QPen(Qt.black, 10))
         painter.drawRect(10, 10, 230, 230)
+        painter.end()
 
         return pixmap

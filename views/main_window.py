@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
         i = 0
         for s in model.available_shapes:
             layout.addWidget(self._create_cell_widget(s), i // 2, i % 2)
-            i = + 1
+            i += 1
 
         widget = QWidget()
         widget.setLayout(layout)
