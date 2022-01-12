@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, Q
 __all__ = ("MainWindow",)
 
 import model
-from views import PaintingArea
+from .painting_area import PaintingArea
 
 COLORS = {
     "Black": Qt.black,
@@ -75,10 +75,10 @@ class MainWindow(QMainWindow):
         self._edit_action.setChecked(False)
 
     def _fill_button_clicked(self):
-        self._area.change_color_selected()
+        self._area.change_fill_color_selected()
 
     def _line_button_clicked(self):
-        self._area.change_color_selected()
+        self._area.change_border_color_selected()
 
     def _item_color_changed(self, color: Color):
         self._fill_color = color

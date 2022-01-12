@@ -1,7 +1,7 @@
 import enum
 from typing import Optional, Type, Union
 
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import QPoint, QRect, QRectF
 from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor
 from PySide6.QtWidgets import QWidget
 
@@ -66,10 +66,16 @@ class PaintingArea(QWidget):
     def fill_color(self, value: Union[QColor, Qt.GlobalColor]):
         self._fill_color = value
 
-    def change_color_selected(self):
+    def change_border_color_selected(self):
         for shape in self._storage:
             if shape.selected:
                 shape.default_border_color = self._line_color
+
+        self.update()
+
+    def change_fill_color_selected(self):
+        for shape in self._storage:
+            if shape.selected:
                 shape.default_background_color = self._fill_color
 
         self.update()
@@ -117,7 +123,6 @@ class PaintingArea(QWidget):
         self._change_selected(0, 0, dw, dh, 0)
 
     def rotate_selected(self, direction: Direction, increased_step: bool = False):
-        da = 0
         if direction == self.Direction.LEFT:
             da = -5
         elif direction == self.Direction.RIGHT:
@@ -139,8 +144,7 @@ class PaintingArea(QWidget):
                 shape.h += dh
                 shape.a += da
 
-                if not self.inside_area(shape.x - shape.w // 2, shape.y - shape.h // 2) or \
-                        not self.inside_area(shape.x + shape.w // 2, shape.y + shape.h / 2):
+                if not self.inside_area(shape.bounding_rect):
                     shape.x -= dx
                     shape.y -= dy
                     shape.w -= dw
@@ -149,8 +153,9 @@ class PaintingArea(QWidget):
 
         self.update()
 
-    def inside_area(self, x: int, y: int) -> bool:
-        return 0 <= x <= self.width() and 0 <= y <= self.height()
+    def inside_area(self, rect: QRect) -> bool:
+        r = QRectF(self.rect())
+        return r.contains(rect)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         x = event.x()
@@ -164,7 +169,7 @@ class PaintingArea(QWidget):
 
                 flag = False
                 for shape in reversed(self._storage):
-                    if shape.inside_selection(x, y) and not flag:
+                    if shape.inside(QPoint(x, y)) and not flag:
                         shape.selected = True
                         flag = True
                     elif not ctrl:
@@ -205,12 +210,12 @@ class PaintingArea(QWidget):
         d = event.pos() - self._prev_mouse_pos
         dx = d.x()
         dy = d.y()
-        if self.inside_area(event.x(), event.y()):
+        if self.rect().contains(event.pos()):
             self._prev_mouse_pos = event.pos()
 
         inside_selected = False
         for shape in self._storage:
-            if shape.selected and shape.inside_selection(self._prev_mouse_pos.x(), self._prev_mouse_pos.y()):
+            if shape.selected and shape.inside(QPoint(self._prev_mouse_pos.x(), self._prev_mouse_pos.y())):
                 inside_selected = True
                 break
 

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from PySide6.QtGui import QPainter, QColor, Qt, QBrush, QPen, QPixmap, QPainterPath
+from PySide6.QtCore import QRectF, QPoint
+from PySide6.QtGui import QPainter, QColor, Qt, QBrush, QPen, QPixmap, QPainterPath, QTransform
 
 __all__ = ("Shape",)
 
@@ -26,13 +27,10 @@ class Shape(ABC):
         self._selected_pen = QPen(self._selected_border_color, 1.25, Qt.DotLine)
         self._selected_brush = QBrush(self._selected_background_color)
 
-    def inside_selection(self, x: int, y: int) -> bool:
-        return self.inside(x, y) or self._selected and 0 <= x - self._x <= self._w and 0 <= y - self._y <= self._h
+    def inside(self, p: QPoint) -> bool:
+        return self.shape().contains(p) or self._selected and self.bounding_rect.contains(p)
 
     def paint(self, painter: QPainter):
-        painter.translate(self._x, self._y)
-        painter.rotate(self._a)
-
         painter.setPen(self._default_pen)
         painter.setBrush(self._default_brush)
         painter.drawPath(self.shape())
@@ -40,11 +38,7 @@ class Shape(ABC):
         if self._selected:
             painter.setPen(self._selected_pen)
             painter.setBrush(self._selected_brush)
-            painter.drawRect(-self._w // 2, -self._h // 2, self._w, self._h)
-
-    @abstractmethod
-    def inside(self, x: int, y: int) -> bool:
-        pass
+            painter.drawRect(self.shape().boundingRect())
 
     @abstractmethod
     def shape(self) -> QPainterPath:
@@ -107,6 +101,18 @@ class Shape(ABC):
     @a.setter
     def a(self, value: float):
         self._a = value
+
+    @property
+    def transform(self) -> QTransform:
+        t = QTransform()
+        t.translate(self.x, self.y)
+        t.rotate(self.a)
+
+        return t
+
+    @property
+    def bounding_rect(self) -> QRectF:
+        return self.shape().boundingRect()
 
     @property
     def default_border_color(self) -> QColor:

@@ -1,17 +1,16 @@
 from PySide6.QtGui import QPainter, Qt, QPixmap, QPen, QPainterPath
 
-__all__ = ("Ellipse",)
-
 from .shape import Shape
+
+__all__ = ("Ellipse",)
 
 
 class Ellipse(Shape):
-    def inside(self, x: int, y: int) -> bool:
-        return (2 * (self._x - x) / self._w) ** 2 + (2 * (self._y - y) / self._h) ** 2 <= 1
-
     def shape(self) -> QPainterPath:
         path = QPainterPath()
         path.addEllipse(-self._w // 2, -self._h // 2, self._w, self._h)
+
+        path = self.transform.map(path)
         return path
 
     @staticmethod
