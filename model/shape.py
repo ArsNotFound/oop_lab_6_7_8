@@ -28,20 +28,20 @@ class Shape(ABC):
         self._selected_brush = QBrush(self._selected_background_color)
 
     def inside(self, p: QPoint) -> bool:
-        return self.shape().contains(p) or self._selected and self.bounding_rect.contains(p)
+        return self.path().contains(p) or self._selected and self.bounding_rect.contains(p)
 
     def paint(self, painter: QPainter):
         painter.setPen(self._default_pen)
         painter.setBrush(self._default_brush)
-        painter.drawPath(self.shape())
+        painter.drawPath(self.path())
 
         if self._selected:
             painter.setPen(self._selected_pen)
             painter.setBrush(self._selected_brush)
-            painter.drawRect(self.shape().boundingRect())
+            painter.drawRect(self.path().boundingRect())
 
     @abstractmethod
-    def shape(self) -> QPainterPath:
+    def path(self) -> QPainterPath:
         pass
 
     @staticmethod
@@ -112,7 +112,7 @@ class Shape(ABC):
 
     @property
     def bounding_rect(self) -> QRectF:
-        return self.shape().boundingRect()
+        return self.path().boundingRect()
 
     @property
     def default_border_color(self) -> QColor:

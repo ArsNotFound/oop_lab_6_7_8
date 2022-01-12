@@ -6,9 +6,9 @@ __all__ = ("Rectangle",)
 
 
 class Rectangle(Shape):
-    def shape(self) -> QPainterPath:
+    def path(self) -> QPainterPath:
         path = QPainterPath()
-        path.addRect(-self._w // 2, -self._h // 2, self._w, self._h)
+        path.addRect(-self.w // 2, -self.h // 2, self.w, self.h)
 
         path = self.transform.map(path)
         return path

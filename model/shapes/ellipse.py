@@ -6,9 +6,9 @@ __all__ = ("Ellipse",)
 
 
 class Ellipse(Shape):
-    def shape(self) -> QPainterPath:
+    def path(self) -> QPainterPath:
         path = QPainterPath()
-        path.addEllipse(-self._w // 2, -self._h // 2, self._w, self._h)
+        path.addEllipse(-self.w // 2, -self.h // 2, self.w, self.h)
 
         path = self.transform.map(path)
         return path

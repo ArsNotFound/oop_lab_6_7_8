@@ -7,7 +7,7 @@ __all__ = ("Triangle",)
 
 
 class Triangle(Shape):
-    def shape(self) -> QPainterPath:
+    def path(self) -> QPainterPath:
         p0 = QPoint(-self.w // 2, self.h // 2)
         p1 = QPoint(self.w // 2, self.h // 2)
         p2 = QPoint(0, -self.h // 2)
