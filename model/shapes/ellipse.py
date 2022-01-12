@@ -1,6 +1,6 @@
 from PySide6.QtGui import QPainter, Qt, QPixmap, QPen, QPainterPath
 
-from .shape import Shape
+from model.shape import Shape
 
 __all__ = ("Ellipse",)
 

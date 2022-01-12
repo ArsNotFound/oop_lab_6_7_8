@@ -1,7 +1,7 @@
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QPixmap, QPainterPath, QPolygon, QPainter, QPen
 
-from .shape import Shape
+from model.shape import Shape
 
 __all__ = ("Triangle",)
 

@@ -1,6 +1,6 @@
 from PySide6.QtGui import QPainter, QPixmap, Qt, QPen, QPainterPath
 
-from .shape import Shape
+from model.shape import Shape
 
 __all__ = ("Rectangle",)
 

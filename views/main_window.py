@@ -6,10 +6,11 @@ from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPa
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, QAbstractButton, QToolButton, \
     QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu
 
-__all__ = ("MainWindow",)
-
 import model
+from model import shapes
 from .painting_area import PaintingArea
+
+__all__ = ("MainWindow",)
 
 COLORS = {
     "Black": Qt.black,
@@ -147,7 +148,7 @@ class MainWindow(QMainWindow):
 
         layout = QGridLayout()
         i = 0
-        for s in model.available_shapes:
+        for s in shapes.available_shapes:
             layout.addWidget(self._create_cell_widget(s), i // 2, i % 2)
             i += 1
 
