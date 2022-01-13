@@ -5,7 +5,7 @@ from PySide6.QtCore import QPoint, QRect, QRectF
 from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor
 from PySide6.QtWidgets import QWidget
 
-from model import Storage, Shape
+from model import Storage, Shape, Group
 
 __all__ = ("PaintingArea",)
 
@@ -105,6 +105,39 @@ class PaintingArea(QWidget):
         for shape in shapes:
             shape._z = z
             self._storage.push(shape, z)
+
+        self.update()
+
+    def group_selected(self):
+        group = Group()
+        self._storage.first()
+        while not self._storage.eol():
+            shape = self._storage.get_current()
+            if shape.selected:
+                self._storage.pop_current()
+                group.add_shape(shape)
+            else:
+                self._storage.next()
+
+        group.selected = True
+        self._storage.push(group)
+
+        self.update()
+
+    def ungroup_selected(self):
+        shapes = []
+        self._storage.first()
+        while not self._storage.eol():
+            shape = self._storage.get_current()
+            if shape.selected and isinstance(shape, Group):
+                self._storage.pop_current()
+                shapes.extend(shape.shapes())
+            else:
+                self._storage.next()
+
+        for shape in shapes:
+            shape.selected = True
+            self._storage.push(shape)
 
         self.update()
 

@@ -136,7 +136,7 @@ class Storage(Generic[T]):
 
         else:
             curr = self._first
-            while curr.priority <= priority:
+            while curr.priority <= priority and curr.next:
                 curr = curr.next
             if curr.prev:
                 curr.prev.next = node

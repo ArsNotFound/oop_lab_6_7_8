@@ -64,6 +64,12 @@ class MainWindow(QMainWindow):
     def _send_to_back(self):
         self._area.change_z_selected(-100)
 
+    def _group(self):
+        self._area.group_selected()
+
+    def _ungroup(self):
+        self._area.ungroup_selected()
+
     def _set_edit_mode(self):
         self._area.mode = PaintingArea.Mode.EDIT_ITEM
         self._edit_action.setChecked(True)
@@ -176,6 +182,14 @@ class MainWindow(QMainWindow):
         self._send_to_back_action.setShortcut("B")
         self._send_to_back_action.triggered.connect(self._send_to_back)
 
+        self._group_action = QAction("Group", self)
+        self._group_action.setShortcut("Ctrl+G")
+        self._group_action.triggered.connect(self._group)
+
+        self._ungroup_action = QAction("Ungroup", self)
+        self._ungroup_action.setShortcut("Ctrl+U")
+        self._ungroup_action.triggered.connect(self._ungroup)
+
         self._exit_action = QAction("Exit", self)
         self._exit_action.setShortcut(QKeySequence.Quit)
         self._exit_action.triggered.connect(QWidget.close)
@@ -186,6 +200,8 @@ class MainWindow(QMainWindow):
         self._edit_toolbar.addAction(self._bring_to_front_action)
         self._edit_toolbar.addAction(self._send_to_back_action)
         self._edit_toolbar.addAction(self._edit_action)
+        self._edit_toolbar.addAction(self._group_action)
+        self._edit_toolbar.addAction(self._ungroup_action)
 
         self._fill_color = Qt.white
         self._fill_color_tool_button = QToolButton()
