@@ -2,7 +2,7 @@ import functools
 from typing import Type, Callable, Union
 
 from PySide6.QtCore import Slot, QSize, QRect
-from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent
+from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent, QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, QAbstractButton, QToolButton, \
     QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu
 
@@ -284,3 +284,6 @@ class MainWindow(QMainWindow):
         pixmap.fill(color)
 
         return QIcon(pixmap)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self._area.save()

@@ -5,9 +5,11 @@ from PySide6.QtCore import QPoint, QRect, QRectF
 from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor
 from PySide6.QtWidgets import QWidget
 
-from model import Storage, Shape, Group
+from model import ShapeStorage, Shape, Group
 
 __all__ = ("PaintingArea",)
+
+SAVE_FILE = "test.txt"
 
 
 class PaintingArea(QWidget):
@@ -23,11 +25,16 @@ class PaintingArea(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self._storage: Storage[Shape] = Storage()
         self._current_shape: Optional[Type[Shape]] = None
         self._mode = self.Mode.EDIT_ITEM
         self._line_color: Optional[Union[QColor, Qt.GlobalColor]] = None
         self._fill_color: Optional[Union[QColor, Qt.GlobalColor]] = None
+
+        try:
+            with open(SAVE_FILE, "r") as f:
+                self._storage: ShapeStorage = ShapeStorage.load(f)
+        except FileNotFoundError:
+            self._storage: ShapeStorage = ShapeStorage()
 
         self._mouse_pressed = False
         self._prev_mouse_pos = QPoint()
@@ -265,3 +272,7 @@ class PaintingArea(QWidget):
             shape.paint(painter)
             painter.restore()
         painter.end()
+
+    def save(self):
+        with open(SAVE_FILE, "w") as f:
+            self._storage.save(f)

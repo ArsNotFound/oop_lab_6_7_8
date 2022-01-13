@@ -1,3 +1,4 @@
+import typing
 from PySide6.QtGui import QPainter, Qt, QPixmap, QPen, QPainterPath
 
 from model.shape import Shape

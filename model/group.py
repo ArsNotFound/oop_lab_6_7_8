@@ -1,6 +1,9 @@
+import typing
+
 from PySide6.QtGui import QPixmap, QPainterPath, QPainter, QColor, QTransform
 
 from .shape import Shape
+from .shapes import get_shapes_dict
 
 __all__ = ("Group",)
 
@@ -11,8 +14,8 @@ class Group(Shape):
         self._shapes: list[Shape] = []
         self._max_x = 0
         self._max_y = 0
-        self._min_x = 2**32
-        self._min_y = 2**32
+        self._min_x = 2 ** 32
+        self._min_y = 2 ** 32
 
     def add_shape(self, shape: Shape):
         shape.selected = False
@@ -52,6 +55,27 @@ class Group(Shape):
     @staticmethod
     def image() -> QPixmap:
         raise NotImplemented
+
+    @classmethod
+    def load(cls, file: typing.IO) -> "Group":
+        group = cls()
+        shapes = get_shapes_dict()
+        n = int(file.readline().strip())
+        for i in range(n):
+            name = file.readline().strip()
+            if name == cls.name():
+                s = cls.load(file)
+            else:
+                s = shapes[name].load(file)
+            group.add_shape(s)
+
+        return group
+
+    def save(self, file: typing.IO):
+        file.write(self.name() + "\n")
+        file.write(str(len(self._shapes)) + "\n")
+        for shape in self._shapes:
+            shape.save(file)
 
     @property
     def x(self) -> int:

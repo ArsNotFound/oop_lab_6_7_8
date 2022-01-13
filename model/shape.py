@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 
 from PySide6.QtCore import QRectF, QPoint
@@ -53,6 +54,24 @@ class Shape(ABC):
     @abstractmethod
     def image() -> QPixmap:
         pass
+
+    @classmethod
+    def load(cls, file: typing.IO) -> "Shape":
+        line = file.readline()
+        x, y, w, h, a, *_ = map(int, line.strip().split(" "))
+        s = cls(x, y, w, h, a)
+
+        border_color, background_color = map(int, line.strip().split(" "))
+        s.default_border_color = QColor.fromRgba(border_color)
+        s.default_background_color = QColor.fromRgba(background_color)
+
+        return s
+
+    def save(self, file: typing.IO):
+        file.write(self.name() + "\n")
+        file.write(" ".join(map(str, (self.x, self.y, self.w, self.h, self.a))) + "\n")
+        file.write(" ".join(map(lambda x: str(x.rgba()),
+                                (self.default_border_color, self.default_background_color))) + "\n")
 
     @property
     def selected(self) -> bool:
@@ -120,7 +139,7 @@ class Shape(ABC):
 
     @default_border_color.setter
     def default_border_color(self, value: QColor):
-        self._default_border_color = value
+        self._default_border_color = QColor(value)
         self._default_pen.setColor(value)
 
     @property
@@ -129,7 +148,7 @@ class Shape(ABC):
 
     @default_background_color.setter
     def default_background_color(self, value: QColor):
-        self._default_background_color = value
+        self._default_background_color = QColor(value)
         self._default_brush.setColor(value)
 
     @property
@@ -138,7 +157,7 @@ class Shape(ABC):
 
     @selected_border_color.setter
     def selected_border_color(self, value: QColor):
-        self._selected_border_color = value
+        self._selected_border_color = QColor(value)
         self._selected_pen.setColor(value)
 
     @property
@@ -147,5 +166,5 @@ class Shape(ABC):
 
     @selected_background_color.setter
     def selected_background_color(self, value: QColor):
-        self._selected_background_color = value
+        self._selected_background_color = QColor(value)
         self._selected_brush.setColor(value)

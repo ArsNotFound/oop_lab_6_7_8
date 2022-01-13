@@ -1,7 +1,11 @@
+import typing
 from dataclasses import dataclass, field
 from typing import TypeVar, Generic, Optional
 
-__all__ = ("Node", "Storage", "Iterator")
+__all__ = ("Node", "Storage", "Iterator", "ShapeStorage")
+
+from model import Shape, Group
+from model.shapes import get_shapes_dict
 
 T = TypeVar("T")
 
@@ -74,6 +78,8 @@ class Storage(Generic[T]):
         if self._current is None:
             raise ValueError("Trying to pop current from empty list")
 
+        self._size -= 1
+
         if self._current.prev:
             self._current.prev.next = self._current.next
 
@@ -96,6 +102,7 @@ class Storage(Generic[T]):
         if self._last is None:
             raise ValueError("Trying to pop back from empty list")
 
+        self._size -= 1
         v = self._last.value
         p = self._last.prev
         if p:
@@ -109,6 +116,7 @@ class Storage(Generic[T]):
         if self._first is None:
             raise ValueError("Trying to pop front from empty list")
 
+        self._size -= 1
         v = self._first.value
         n = self._first.next
         if n:
@@ -119,6 +127,7 @@ class Storage(Generic[T]):
         return v
 
     def push(self, value: T, priority=0):
+        self._size += 1
         node = Node(value, priority)
         if not self._first:
             self._current = self._first = self._last = node
@@ -143,3 +152,33 @@ class Storage(Generic[T]):
                 node.prev = curr.prev.next
             node.next = curr.prev
             curr.prev = node.next
+
+
+class ShapeStorage(Storage[Shape]):
+    def save(self, file: typing.IO):
+        file.write(str(self._size) + "\n")
+        self.first()
+        while not self.eol():
+            c = self.get_current()
+            c.save(file)
+            self.next()
+
+    @classmethod
+    def load(cls, file: typing.IO) -> "ShapeStorage":
+        storage = cls()
+        shapes = get_shapes_dict()
+
+        try:
+            n = int(file.readline().strip())
+        except ValueError:
+            return storage
+
+        for i in range(n):
+            name = file.readline().strip()
+            if name == Group.name():
+                s = Group.load(file)
+            else:
+                s = shapes[name].load(file)
+            storage.push(s)
+
+        return storage
