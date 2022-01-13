@@ -265,6 +265,7 @@ class PaintingArea(QWidget):
     def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
         painter.fillRect(0, 0, self.size().width(), self.size().height(), Qt.white)
 
         for shape in self._storage:

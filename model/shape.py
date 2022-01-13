@@ -57,11 +57,10 @@ class Shape(ABC):
 
     @classmethod
     def load(cls, file: typing.IO) -> "Shape":
-        line = file.readline()
-        x, y, w, h, a, *_ = map(int, line.strip().split(" "))
+        x, y, w, h, a, *_ = map(int, file.readline().strip().split(" "))
         s = cls(x, y, w, h, a)
 
-        border_color, background_color = map(int, line.strip().split(" "))
+        border_color, background_color = map(int, file.readline().strip().split(" "))
         s.default_border_color = QColor.fromRgba(border_color)
         s.default_background_color = QColor.fromRgba(background_color)
 
