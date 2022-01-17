@@ -35,13 +35,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self._create_tool_box()
         self._create_actions()
         self._create_toolbars()
 
         self._area = PaintingArea()
         self._area.line_color = self._line_color
         self._area.fill_color = self._fill_color
+
+        self._create_tool_box()
 
         layout = QHBoxLayout()
         layout.addWidget(self._toolbox)
@@ -152,18 +153,18 @@ class MainWindow(QMainWindow):
         self._shapes_id: dict[int, Type[model.Shape]] = {}
         self._last_btn_id = -1
 
-        layout = QGridLayout()
+        shapes_layout = QGridLayout()
         i = 0
         for s in shapes.available_shapes:
-            layout.addWidget(self._create_cell_widget(s), i // 2, i % 2)
+            shapes_layout.addWidget(self._create_cell_widget(s), i // 2, i % 2)
             i += 1
 
-        widget = QWidget()
-        widget.setLayout(layout)
+        shapes_widget = QWidget()
+        shapes_widget.setLayout(shapes_layout)
 
         self._toolbox = QToolBox()
         self._toolbox.setSizePolicy(QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored))
-        self._toolbox.addItem(widget, "Shapes")
+        self._toolbox.addItem(shapes_widget, "Shapes")
 
     def _create_actions(self):
         self._delete_action = QAction(QIcon(DELETE_PATH), "Delete", self)
@@ -243,6 +244,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(QLabel(shape.name()), 1, 0, Qt.AlignCenter)
 
         widget = QWidget()
+        widget.setSizePolicy(QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum))
         widget.setLayout(layout)
 
         return widget

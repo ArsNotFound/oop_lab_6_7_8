@@ -78,6 +78,16 @@ class Group(Shape):
             shape.save(file)
 
     @property
+    def selected(self) -> bool:
+        return self._selected
+
+    @selected.setter
+    def selected(self, value: bool):
+        self._selected = value
+        for s in self._shapes:
+            s.selected = value
+
+    @property
     def x(self) -> int:
         return (self._max_x + self._min_x) // 2
 
@@ -130,13 +140,15 @@ class Group(Shape):
         da = value - self.a
         self._a = value
 
+        x, y = self.x, self.y
+
         t = QTransform()
-        t.translate(self.x, self.y)
+        t.translate(x, y)
         t.rotate(da)
 
         for shape in self._shapes:
             shape.a += da
-            shape.x, shape.y = map(int, t.map(shape.x - self.x, shape.y - self.y))
+            shape.x, shape.y = map(int, t.map(shape.x - x, shape.y - y))
 
     @property
     def default_border_color(self) -> QColor:

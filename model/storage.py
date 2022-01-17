@@ -4,7 +4,8 @@ from typing import TypeVar, Generic, Optional
 
 __all__ = ("Node", "Storage", "Iterator", "ShapeStorage")
 
-from model import Shape, Group
+from .shape import Shape
+from .group import Group
 from model.shapes import get_shapes_dict
 
 T = TypeVar("T")

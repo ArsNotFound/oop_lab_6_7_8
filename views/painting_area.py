@@ -216,7 +216,7 @@ class PaintingArea(QWidget):
                         shape.selected = False
 
             case self.Mode.INSERT_ITEM:
-                shape = self._current_shape(x, y, 40, 40, 0)
+                shape = self._current_shape(x, y, 40, 40)
 
                 if shape.x < shape.w // 2:
                     shape.x = shape.w // 2
@@ -266,7 +266,7 @@ class PaintingArea(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        painter.fillRect(0, 0, self.size().width(), self.size().height(), Qt.white)
+        painter.fillRect(0, 0, self.width(), self.height(), Qt.white)
 
         for shape in self._storage:
             painter.save()
