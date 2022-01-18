@@ -7,7 +7,7 @@ from PySide6.QtGui import QTransform, QColor, Qt, QPen, QBrush
 __all__ = ("PosMixin", "ColorMixin")
 
 
-class PosMixin:
+class PosMixin(ABC):
     def __init__(self, x: int, y: int, w: int, h: int, a: float):
         self._x = x
         self._y = y

@@ -58,7 +58,7 @@ class Shape(QObject, PosMixin, ColorMixin, metaclass=MyMeta):
             painter.drawRect(self.bounding_rect)
 
         if self._sticky:
-            painter.setPen(QPen(Qt.black))
+            painter.setPen(QPen(Qt.black, 4))
             painter.drawRect(self.bounding_rect)
 
     @property
@@ -89,6 +89,10 @@ class Shape(QObject, PosMixin, ColorMixin, metaclass=MyMeta):
 
     @Slot(object)
     def sticky_changed(self, sticky: "Shape"):
+        if not sticky._sticky:
+            sticky.changed.disconnect(self.sticky_changed)
+            self._sticky_shape = None
+
         d = self.pos - self._sticky_prev_pos
         self.pos = sticky.pos + d
         self._sticky_prev_pos = sticky.pos
@@ -96,6 +100,7 @@ class Shape(QObject, PosMixin, ColorMixin, metaclass=MyMeta):
     @classmethod
     def load(cls, file: typing.IO) -> "Shape":
         s = cls()
+        s.selected, s.sticky = map(bool, map(int, file.readline().strip().split(" ")))
         s.load_pos(file)
         s.load_color(file)
 
@@ -103,6 +108,10 @@ class Shape(QObject, PosMixin, ColorMixin, metaclass=MyMeta):
 
     def save(self, file: typing.IO) -> None:
         file.write(self.name() + "\n")
+        file.write("1" if self.selected else "0")
+        file.write(" ")
+        file.write("1" if self.sticky else "0")
+        file.write("\n")
         self.save_pos(file)
         self.save_color(file)
 
