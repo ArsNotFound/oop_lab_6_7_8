@@ -4,13 +4,15 @@ from typing import Type, Callable, Union
 from PySide6.QtCore import Slot, QSize, QRect
 from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent, QCloseEvent
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, QAbstractButton, QToolButton, \
-    QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu
+    QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu, QTreeWidget, QAbstractItemView
 
 import model
 from model import shapes
 from .painting_area import PaintingArea
 
 __all__ = ("MainWindow",)
+
+from .tree_widget import process_shape, ShapeTreeWidgetItem
 
 COLORS = {
     "Black": Qt.black,
@@ -70,6 +72,9 @@ class MainWindow(QMainWindow):
 
     def _ungroup(self):
         self._area.ungroup_selected()
+
+    def _sticky(self):
+        self._area.make_sticky_selected()
 
     def _set_edit_mode(self):
         self._area.mode = PaintingArea.Mode.EDIT_ITEM
@@ -162,9 +167,39 @@ class MainWindow(QMainWindow):
         shapes_widget = QWidget()
         shapes_widget.setLayout(shapes_layout)
 
+        self._tree_widget = QTreeWidget()
+        self._tree_widget.setHeaderHidden(True)
+        self._tree_widget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self._area.storage.storage_changed.connect(self._update_tw)
+        self._tree_widget.itemSelectionChanged.connect(self._on_tw_select)
+        self._update_tw()
+
         self._toolbox = QToolBox()
         self._toolbox.setSizePolicy(QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored))
         self._toolbox.addItem(shapes_widget, "Shapes")
+        self._toolbox.addItem(self._tree_widget, "Tree View")
+
+    @Slot()
+    def _update_tw(self):
+        self._tree_widget.blockSignals(True)
+        self._tree_widget.clear()
+        for s in self._area.storage:
+            process_shape(self._tree_widget.invisibleRootItem(), s)
+        self._tree_widget.expandAll()
+        self._tree_widget.blockSignals(False)
+
+    @Slot()
+    def _on_tw_select(self):
+        sel = self._tree_widget.selectedItems()
+        self._area.storage.blockSignals(True)
+        for s in self._area.storage:
+            s.selected = False
+
+        for i in sel:
+            if isinstance(i, ShapeTreeWidgetItem):
+                i.shape.selected = True
+        self._area.storage.blockSignals(False)
+        self._area.storage.storage_changed.emit()
 
     def _create_actions(self):
         self._delete_action = QAction(QIcon(DELETE_PATH), "Delete", self)
@@ -191,6 +226,9 @@ class MainWindow(QMainWindow):
         self._ungroup_action.setShortcut("Ctrl+U")
         self._ungroup_action.triggered.connect(self._ungroup)
 
+        self._sticky_action = QAction("Sticky", self)
+        self._sticky_action.triggered.connect(self._sticky)
+
         self._exit_action = QAction("Exit", self)
         self._exit_action.setShortcut(QKeySequence.Quit)
         self._exit_action.triggered.connect(QWidget.close)
@@ -203,6 +241,7 @@ class MainWindow(QMainWindow):
         self._edit_toolbar.addAction(self._edit_action)
         self._edit_toolbar.addAction(self._group_action)
         self._edit_toolbar.addAction(self._ungroup_action)
+        self._edit_toolbar.addAction(self._sticky_action)
 
         self._fill_color = Qt.white
         self._fill_color_tool_button = QToolButton()

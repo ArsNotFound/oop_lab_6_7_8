@@ -1,8 +1,8 @@
 import enum
 from typing import Optional, Type, Union
 
-from PySide6.QtCore import QPoint, QRect, QRectF
-from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor
+from PySide6.QtCore import QPoint, QRect, QRectF, Slot, QSize
+from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor, QTransform
 from PySide6.QtWidgets import QWidget
 
 from model import ShapeStorage, Shape, Group
@@ -32,14 +32,20 @@ class PaintingArea(QWidget):
 
         try:
             with open(SAVE_FILE, "r") as f:
-                self._storage: ShapeStorage = ShapeStorage.load(f)
+                self._storage: ShapeStorage = ShapeStorage.load(f, self)
         except FileNotFoundError:
-            self._storage: ShapeStorage = ShapeStorage()
+            self._storage: ShapeStorage = ShapeStorage(self)
+
+        self._storage.storage_changed.connect(self.on_storage_changed)
 
         self._mouse_pressed = False
         self._prev_mouse_pos = QPoint()
 
         self.setMouseTracking(True)
+
+    @property
+    def storage(self) -> ShapeStorage:
+        return self._storage
 
     @property
     def current_shape(self) -> Optional[Type[Shape]]:
@@ -73,19 +79,19 @@ class PaintingArea(QWidget):
     def fill_color(self, value: Union[QColor, Qt.GlobalColor]):
         self._fill_color = value
 
+    @Slot()
+    def on_storage_changed(self):
+        self.update()
+
     def change_border_color_selected(self):
         for shape in self._storage:
             if shape.selected:
                 shape.default_border_color = self._line_color
 
-        self.update()
-
     def change_fill_color_selected(self):
         for shape in self._storage:
             if shape.selected:
                 shape.default_background_color = self._fill_color
-
-        self.update()
 
     def delete_selected(self):
         self._storage.first()
@@ -95,8 +101,6 @@ class PaintingArea(QWidget):
                 self._storage.pop_current()
             else:
                 self._storage.next()
-
-        self.update()
 
     def change_z_selected(self, z: int):
         shapes = []
@@ -113,8 +117,6 @@ class PaintingArea(QWidget):
             shape._z = z
             self._storage.push(shape, z)
 
-        self.update()
-
     def group_selected(self):
         group = Group()
         self._storage.first()
@@ -127,9 +129,9 @@ class PaintingArea(QWidget):
                 self._storage.next()
 
         group.selected = True
+        if len(group.shapes()) == 0:
+            return
         self._storage.push(group)
-
-        self.update()
 
     def ungroup_selected(self):
         shapes = []
@@ -146,7 +148,10 @@ class PaintingArea(QWidget):
             shape.selected = True
             self._storage.push(shape)
 
-        self.update()
+    def make_sticky_selected(self):
+        for s in self._storage:
+            if s.selected:
+                s.sticky = not s.sticky
 
     def move_selected(self, direction: Direction, increased_step: bool = False):
         dx, dy, *_ = direction.value
@@ -191,7 +196,12 @@ class PaintingArea(QWidget):
                     shape.h -= dh
                     shape.a -= da
 
-        self.update()
+                if shape.sticky:
+                    for s in self._storage:
+                        if s == shape:
+                            continue
+                        if shape.bounding_rect.intersects(s.bounding_rect):
+                            s.sticky_shape = shape
 
     def inside_area(self, rect: QRect) -> bool:
         r = QRectF(self.rect())
@@ -238,8 +248,6 @@ class PaintingArea(QWidget):
                         s.selected = False
                 self._storage.push(shape)
 
-        self.update()
-
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self._mouse_pressed = False
 
@@ -250,12 +258,11 @@ class PaintingArea(QWidget):
         d = event.pos() - self._prev_mouse_pos
         dx = d.x()
         dy = d.y()
-        if self.rect().contains(event.pos()):
-            self._prev_mouse_pos = event.pos()
+        self._prev_mouse_pos = event.pos()
 
         inside_selected = False
         for shape in self._storage:
-            if shape.selected and shape.inside(QPoint(self._prev_mouse_pos.x(), self._prev_mouse_pos.y())):
+            if shape.selected and shape.inside(self._prev_mouse_pos):
                 inside_selected = True
                 break
 

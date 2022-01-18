@@ -1,5 +1,7 @@
 import typing
+from abc import ABC, abstractmethod
 
+from PySide6.QtCore import QPoint
 from PySide6.QtGui import QTransform, QColor, Qt, QPen, QBrush
 
 __all__ = ("PosMixin", "ColorMixin")
@@ -13,43 +15,68 @@ class PosMixin:
         self._h = h
         self._a = a
 
-    def save_pos(self, file: typing.IO):
-        file.write(" ".join(" ".join(map(str, (self.x, self.y, self.w, self.h, self.a))) + "\n"))
+    def save_pos(self, file: typing.IO) -> None:
+        file.write(" ".join(map(str, (self.x, self.y, self.w, self.h, self.a))) + "\n")
 
-    def load_pos(self, file: typing.IO):
+    def load_pos(self, file: typing.IO) -> None:
         self.x, self.y, self.w, self.h, self.a = map(int, file.readline().strip().split(" "))
+
+    @abstractmethod
+    def _notify_pos_changed(self):
+        pass
 
     @property
     def x(self) -> int:
         return self._x
 
     @x.setter
-    def x(self, x: int):
-        self._x = x
+    def x(self, value: int) -> None:
+        if self._x == value:
+            return
+        self._x = value
+        self._notify_pos_changed()
 
     @property
     def y(self) -> int:
         return self._y
 
+    @property
+    def pos(self) -> QPoint:
+        return QPoint(self.x, self.y)
+
+    @pos.setter
+    def pos(self, value: QPoint) -> None:
+        self.x = value.x()
+        self.y = value.y()
+
     @y.setter
-    def y(self, y: int):
-        self._y = y
+    def y(self, value: int) -> None:
+        if self._y == value:
+            return
+        self._y = value
+        self._notify_pos_changed()
 
     @property
     def w(self) -> int:
         return self._w
 
     @w.setter
-    def w(self, value: int):
+    def w(self, value: int) -> None:
+        if self._w == value:
+            return
         self._w = value
+        self._notify_pos_changed()
 
     @property
     def h(self) -> int:
         return self._h
 
     @h.setter
-    def h(self, value: int):
+    def h(self, value: int) -> None:
+        if self._h == value:
+            return
         self._h = value
+        self._notify_pos_changed()
 
     @property
     def a(self) -> float:
@@ -57,7 +84,10 @@ class PosMixin:
 
     @a.setter
     def a(self, value: float):
+        if self._a == value:
+            return
         self._a = value
+        self._notify_pos_changed()
 
     @property
     def transform(self) -> QTransform:
@@ -68,7 +98,10 @@ class PosMixin:
         return t
 
 
-class ColorMixin:
+Color: typing.TypeAlias = QColor | Qt.GlobalColor
+
+
+class ColorMixin(ABC):
     def __init__(self):
         self._selected = False
 
@@ -93,46 +126,77 @@ class ColorMixin:
         self.default_border_color = QColor.fromRgba(border_color)
         self.default_background_color = QColor.fromRgba(background_color)
 
+    @abstractmethod
+    def _notify_default_color_changed(self):
+        pass
+
+    @abstractmethod
+    def _notify_selected_color_changed(self):
+        pass
+
+    @abstractmethod
+    def _notify_selected_changed(self):
+        pass
+
     @property
     def selected(self) -> bool:
         return self._selected
 
     @selected.setter
-    def selected(self, value: bool):
+    def selected(self, value: bool) -> None:
+        if self._selected == value:
+            return
         self._selected = value
+        self._notify_selected_changed()
 
     @property
     def default_border_color(self) -> QColor:
         return self._default_border_color
 
     @default_border_color.setter
-    def default_border_color(self, value: QColor):
-        self._default_border_color = QColor(value)
-        self._default_pen.setColor(value)
+    def default_border_color(self, value: Color) -> None:
+        c = QColor(value)
+        if self._default_border_color == c:
+            return
+        self._default_border_color = c
+        self._default_pen.setColor(c)
+        self._notify_default_color_changed()
 
     @property
     def default_background_color(self) -> QColor:
         return self._default_background_color
 
     @default_background_color.setter
-    def default_background_color(self, value: QColor):
-        self._default_background_color = QColor(value)
-        self._default_brush.setColor(value)
+    def default_background_color(self, value: Color) -> None:
+        c = QColor(value)
+        if self._default_background_color == c:
+            return
+        self._default_background_color = c
+        self._default_brush.setColor(c)
+        self._notify_default_color_changed()
 
     @property
     def selected_border_color(self) -> QColor:
         return self._selected_border_color
 
     @selected_border_color.setter
-    def selected_border_color(self, value: QColor):
-        self._selected_border_color = QColor(value)
-        self._selected_pen.setColor(value)
+    def selected_border_color(self, value: Color) -> None:
+        c = QColor(value)
+        if self._selected_border_color == c:
+            return
+        self._selected_border_color = c
+        self._selected_pen.setColor(c)
+        self._notify_selected_color_changed()
 
     @property
     def selected_background_color(self) -> QColor:
         return self._selected_background_color
 
     @selected_background_color.setter
-    def selected_background_color(self, value: QColor):
-        self._selected_background_color = QColor(value)
-        self._selected_brush.setColor(value)
+    def selected_background_color(self, value: Color) -> None:
+        c = QColor(value)
+        if self._selected_background_color == c:
+            return
+        self._selected_background_color = c
+        self._selected_brush.setColor(c)
+        self._notify_selected_color_changed()

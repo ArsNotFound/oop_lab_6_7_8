@@ -10,7 +10,7 @@ __all__ = ("Group",)
 
 class Group(Shape):
     def __init__(self):
-        super(Group, self).__init__(0, 0, 0, 0, 0)
+        super(Group, self).__init__()
         self._shapes: list[Shape] = []
         self._max_x = 0
         self._max_y = 0
@@ -25,6 +25,8 @@ class Group(Shape):
         self._min_y = min(shape.y, self._min_y)
 
         self._shapes.append(shape)
+
+        self.changed.emit(self)
 
     def shapes(self) -> list[Shape]:
         return self._shapes
@@ -82,61 +84,66 @@ class Group(Shape):
         return self._selected
 
     @selected.setter
-    def selected(self, value: bool):
+    def selected(self, value: bool) -> None:
         self._selected = value
         for s in self._shapes:
             s.selected = value
+        self.changed.emit(self)
 
     @property
     def x(self) -> int:
         return (self._max_x + self._min_x) // 2
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: int) -> None:
         dx = value - self.x
         self._max_x += dx
         self._min_x += dx
         for shape in self._shapes:
             shape.x += dx
+        self.changed.emit(self)
 
     @property
     def y(self) -> int:
         return (self._max_y + self._min_y) // 2
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: int) -> None:
         dy = value - self.y
         self._max_y += dy
         self._min_y += dy
         for shape in self._shapes:
             shape.y += dy
+        self.changed.emit(self)
 
     @property
     def w(self) -> int:
         return int(self.bounding_rect.width())
 
     @w.setter
-    def w(self, value: int):
+    def w(self, value: int) -> None:
         dw = value - self.w
         for shape in self._shapes:
             shape.w += dw
+        self.changed.emit(self)
 
     @property
     def h(self) -> int:
         return int(self.bounding_rect.height())
 
     @h.setter
-    def h(self, value: int):
+    def h(self, value: int) -> None:
         dh = value - self.h
         for shape in self._shapes:
             shape.h += dh
+        self.changed.emit(self)
 
     @property
     def a(self) -> int:
         return self._a
 
     @a.setter
-    def a(self, value: int):
+    def a(self, value: int) -> None:
         da = value - self.a
         self._a = value
 
@@ -149,47 +156,52 @@ class Group(Shape):
         for shape in self._shapes:
             shape.a += da
             shape.x, shape.y = map(int, t.map(shape.x - x, shape.y - y))
+        self.changed.emit(self)
 
     @property
     def default_border_color(self) -> QColor:
         return self._default_border_color
 
     @default_border_color.setter
-    def default_border_color(self, value: QColor):
+    def default_border_color(self, value: QColor) -> None:
         self._default_border_color = value
         self._default_pen.setColor(value)
         for shape in self._shapes:
             shape.default_border_color = value
+        self.changed.emit(self)
 
     @property
     def default_background_color(self) -> QColor:
         return self._default_background_color
 
     @default_background_color.setter
-    def default_background_color(self, value: QColor):
+    def default_background_color(self, value: QColor) -> None:
         self._default_background_color = value
         self._default_brush.setColor(value)
         for shape in self._shapes:
             shape.default_background_color = value
+        self.changed.emit(self)
 
     @property
     def selected_border_color(self) -> QColor:
         return self._selected_border_color
 
     @selected_border_color.setter
-    def selected_border_color(self, value: QColor):
+    def selected_border_color(self, value: QColor) -> None:
         self._selected_border_color = value
         self._selected_pen.setColor(value)
         for shape in self._shapes:
             shape.selected_border_color = value
+        self.changed.emit(self)
 
     @property
     def selected_background_color(self) -> QColor:
         return self._selected_background_color
 
     @selected_background_color.setter
-    def selected_background_color(self, value: QColor):
+    def selected_background_color(self, value: QColor) -> None:
         self._selected_background_color = value
         self._selected_brush.setColor(value)
         for shape in self._shapes:
             shape.selected_background_color = value
+        self.changed.emit(self)

@@ -2,58 +2,62 @@ import typing
 from dataclasses import dataclass, field
 from typing import TypeVar, Generic, Optional
 
-__all__ = ("Node", "Storage", "Iterator", "ShapeStorage")
+__all__ = ("Storage", "ShapeStorage")
+
+from PySide6.QtCore import QObject, Signal, Slot
 
 from .shape import Shape
 from .group import Group
-from model.shapes import get_shapes_dict
+from .shapes import get_shapes_dict
 
 T = TypeVar("T")
 
 
-@dataclass(order=True)
-class Node(Generic[T]):
-    value: T = field(compare=False)
-    priority: int = 0
-    prev: Optional['Node'] = field(compare=False, default=None)
-    next: Optional['Node'] = field(compare=False, default=None)
-
-
-class Iterator:
-    def __init__(self, storage: 'Storage', reverse: bool = False):
-        self._storage = storage
-        self._reverse = reverse
-        if not self._reverse:
-            self._storage.first()
-        else:
-            self._storage.last()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self._storage.eol():
-            raise StopIteration
-        res = self._storage.get_current()
-        if not self._reverse:
-            self._storage.next()
-        else:
-            self._storage.prev()
-        return res
-
-
 class Storage(Generic[T]):
+    @dataclass(order=True)
+    class Node(Generic[T]):
+        value: T = field(compare=False)
+        priority: int = 0
+        prev: Optional["Storage.Node"] = field(compare=False, default=None)
+        next: Optional["Storage.Node"] = field(compare=False, default=None)
+
+    class Iterator(Generic[T]):
+        def __init__(self, storage: "Storage[T]", reverse: bool = False):
+            self._storage = storage
+            self._reverse = reverse
+            if not self._reverse:
+                self._curr = self._storage._first
+            else:
+                self._curr = self._storage._last
+
+        def __iter__(self) -> "Storage.Iterator[T]":
+            return self
+
+        def __next__(self) -> T:
+            if not self._curr:
+                raise StopIteration
+            res = self._curr.value
+            if not self._reverse:
+                self._curr = self._curr.next
+            else:
+                self._curr = self._curr.prev
+            return res
+
     def __init__(self):
-        self._first: Optional[Node] = None
-        self._last: Optional[Node] = None
-        self._current: Optional[Node] = None
+        self._first: Optional[Storage.Node] = None
+        self._last: Optional[Storage.Node] = None
+        self._current: Optional[Storage.Node] = None
         self._size = 0
 
+    @property
+    def size(self) -> int:
+        return self._size
+
     def __iter__(self):
-        return Iterator(self)
+        return Storage.Iterator(self)
 
     def __reversed__(self):
-        return Iterator(self, True)
+        return Storage.Iterator(self, True)
 
     def first(self) -> None:
         self._current = self._first
@@ -129,7 +133,7 @@ class Storage(Generic[T]):
 
     def push(self, value: T, priority=0):
         self._size += 1
-        node = Node(value, priority)
+        node = Storage.Node(value, priority)
         if not self._first:
             self._current = self._first = self._last = node
             return
@@ -155,7 +159,40 @@ class Storage(Generic[T]):
             curr.prev = node.next
 
 
-class ShapeStorage(Storage[Shape]):
+class ShapeStorage(QObject, Storage[Shape]):
+    storage_changed = Signal()
+
+    def __init__(self, parent: Optional[QObject] = None):
+        QObject.__init__(self, parent)
+        Storage.__init__(self)
+
+    @Slot(object)
+    def on_changed(self, item: Shape):
+        self.storage_changed.emit()
+
+    def push(self, value: Shape, priority=0):
+        value.changed.connect(self.on_changed)
+        super().push(value, priority)
+        self.storage_changed.emit()
+
+    def pop_back(self) -> Shape:
+        s = super().pop_back()
+        s.changed.disconnect(self.on_changed)
+        self.storage_changed.emit()
+        return s
+
+    def pop_front(self) -> Shape:
+        s = super().pop_front()
+        s.changed.disconnect(self.on_changed)
+        self.storage_changed.emit()
+        return s
+
+    def pop_current(self) -> Shape:
+        s = super().pop_current()
+        s.changed.disconnect(self.on_changed)
+        self.storage_changed.emit()
+        return s
+
     def save(self, file: typing.IO):
         file.write(str(self._size) + "\n")
         self.first()
@@ -165,7 +202,7 @@ class ShapeStorage(Storage[Shape]):
             self.next()
 
     @classmethod
-    def load(cls, file: typing.IO) -> "ShapeStorage":
+    def load(cls, file: typing.IO, parent: Optional[QObject] = None) -> "ShapeStorage":
         storage = cls()
         shapes = get_shapes_dict()
 
