@@ -74,6 +74,10 @@ class Storage(Generic[T]):
     def prev(self) -> None:
         self._current = self._current.prev
 
+    def clear(self) -> None:
+        self._current = self._first = self._last = None
+        self._size = 0
+
     def get_current(self) -> T:
         if self._current is None:
             raise ValueError("Trying to get current from empty list")
@@ -201,15 +205,14 @@ class ShapeStorage(QObject, Storage[Shape]):
             c.save(file)
             self.next()
 
-    @classmethod
-    def load(cls, file: typing.IO, parent: Optional[QObject] = None) -> "ShapeStorage":
-        storage = cls()
+    def load(self, file: typing.IO):
+        self.clear()
         shapes = get_shapes_dict()
 
         try:
             n = int(file.readline().strip())
         except ValueError:
-            return storage
+            return
 
         for i in range(n):
             name = file.readline().strip()
@@ -217,6 +220,4 @@ class ShapeStorage(QObject, Storage[Shape]):
                 s = Group.load(file)
             else:
                 s = shapes[name].load(file)
-            storage.push(s)
-
-        return storage
+            self.push(s)

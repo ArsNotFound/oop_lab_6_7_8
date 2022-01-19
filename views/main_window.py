@@ -2,9 +2,9 @@ import functools
 from typing import Type, Callable, Union
 
 from PySide6.QtCore import Slot, QSize, QRect
-from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent, QCloseEvent
+from PySide6.QtGui import QIcon, Qt, QAction, QKeySequence, QColor, QPixmap, QPainter, QKeyEvent
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QButtonGroup, QAbstractButton, QToolButton, \
-    QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu, QTreeWidget, QAbstractItemView
+    QGridLayout, QLabel, QToolBox, QSizePolicy, QMenu, QTreeWidget, QAbstractItemView, QFileDialog
 
 import model
 from model import shapes
@@ -106,6 +106,16 @@ class MainWindow(QMainWindow):
             self._create_color_tool_button_icon(LINECOLOR_PATH, self._line_color)
         )
         self._area.line_color = color
+
+    def _save_file(self):
+        filename, _ = QFileDialog.getSaveFileName(self, caption="Save file", dir=".", filter="*.txt")
+        if filename:
+            self._area.save(filename)
+
+    def _load_file(self):
+        filename, _ = QFileDialog.getOpenFileName(self, caption="Open file", dir=".", filter="*.txt")
+        if filename:
+            self._area.load(filename)
 
     @Slot(QAbstractButton)
     def _button_group_clicked(self, button: QAbstractButton):
@@ -229,12 +239,20 @@ class MainWindow(QMainWindow):
         self._sticky_action = QAction("Sticky", self)
         self._sticky_action.triggered.connect(self._sticky)
 
+        self._save_action = QAction("Save", self)
+        self._save_action.triggered.connect(self._save_file)
+
+        self._load_action = QAction("Load", self)
+        self._load_action.triggered.connect(self._load_file)
+
         self._exit_action = QAction("Exit", self)
         self._exit_action.setShortcut(QKeySequence.Quit)
         self._exit_action.triggered.connect(QWidget.close)
 
     def _create_toolbars(self):
         self._edit_toolbar = self.addToolBar("Edit")
+        self._edit_toolbar.addAction(self._load_action)
+        self._edit_toolbar.addAction(self._save_action)
         self._edit_toolbar.addAction(self._delete_action)
         self._edit_toolbar.addAction(self._bring_to_front_action)
         self._edit_toolbar.addAction(self._send_to_back_action)
@@ -325,6 +343,3 @@ class MainWindow(QMainWindow):
         pixmap.fill(color)
 
         return QIcon(pixmap)
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        self._area.save()

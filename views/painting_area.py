@@ -1,8 +1,8 @@
 import enum
 from typing import Optional, Type, Union
 
-from PySide6.QtCore import QPoint, QRect, QRectF, Slot, QSize
-from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor, QTransform
+from PySide6.QtCore import QPoint, QRect, QRectF, Slot
+from PySide6.QtGui import QMouseEvent, Qt, QPaintEvent, QPainter, QColor
 from PySide6.QtWidgets import QWidget
 
 from model import ShapeStorage, Shape, Group
@@ -30,12 +30,7 @@ class PaintingArea(QWidget):
         self._line_color: Optional[Union[QColor, Qt.GlobalColor]] = None
         self._fill_color: Optional[Union[QColor, Qt.GlobalColor]] = None
 
-        try:
-            with open(SAVE_FILE, "r") as f:
-                self._storage: ShapeStorage = ShapeStorage.load(f, self)
-        except FileNotFoundError:
-            self._storage: ShapeStorage = ShapeStorage(self)
-
+        self._storage: ShapeStorage = ShapeStorage(self)
         self._storage.storage_changed.connect(self.on_storage_changed)
 
         self._mouse_pressed = False
@@ -281,6 +276,14 @@ class PaintingArea(QWidget):
             painter.restore()
         painter.end()
 
-    def save(self):
-        with open(SAVE_FILE, "w") as f:
+    def save(self, filename: str):
+        with open(filename, "w") as f:
             self._storage.save(f)
+
+    def load(self, filename: str):
+        try:
+            with open(filename, "r") as f:
+                self._storage.load(f)
+            self.update()
+        except FileNotFoundError:
+            pass
