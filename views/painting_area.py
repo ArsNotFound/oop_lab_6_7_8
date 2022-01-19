@@ -30,6 +30,7 @@ class PaintingArea(QWidget):
         self._line_color: Optional[Union[QColor, Qt.GlobalColor]] = None
         self._fill_color: Optional[Union[QColor, Qt.GlobalColor]] = None
 
+        self._sticky_shapes: set[Shape] = set()
         self._storage: ShapeStorage = ShapeStorage(self)
         self._storage.storage_changed.connect(self.on_storage_changed)
 
@@ -118,6 +119,8 @@ class PaintingArea(QWidget):
         while not self._storage.eol():
             shape = self._storage.get_current()
             if shape.selected:
+                shape.sticky = False
+                self._sticky_shapes.discard(shape)
                 self._storage.pop_current()
                 group.add_shape(shape)
             else:
@@ -147,6 +150,10 @@ class PaintingArea(QWidget):
         for s in self._storage:
             if s.selected:
                 s.sticky = not s.sticky
+                if s.sticky:
+                    self._sticky_shapes.add(s)
+                else:
+                    self._sticky_shapes.discard(s)
 
     def move_selected(self, direction: Direction, increased_step: bool = False):
         dx, dy, *_ = direction.value
@@ -191,12 +198,27 @@ class PaintingArea(QWidget):
                     shape.h -= dh
                     shape.a -= da
 
-                if shape.sticky:
-                    for s in self._storage:
-                        if s == shape:
-                            continue
-                        if shape.bounding_rect.intersects(s.bounding_rect):
-                            s.sticky_shape = shape
+                self._check_sticky(shape)
+
+    def _check_sticky(self, shape: Shape):
+        if shape.sticky:
+            for s in self._storage:
+                if s == shape:
+                    continue
+                if shape.bounding_rect.intersects(s.bounding_rect):
+                    s.sticky_shape = shape
+        else:
+            found = False
+            for st in self._sticky_shapes:
+                if shape == st:
+                    continue
+
+                if st.bounding_rect.intersects(shape.bounding_rect):
+                    shape.sticky_shape = st
+                    found = True
+
+            if not found:
+                shape.sticky_shape = None
 
     def inside_area(self, rect: QRect) -> bool:
         r = QRectF(self.rect())

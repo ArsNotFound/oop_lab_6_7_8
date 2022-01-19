@@ -1,6 +1,6 @@
 import typing
 
-from PySide6.QtGui import QPixmap, QPainterPath, QPainter, QColor, QTransform
+from PySide6.QtGui import QPixmap, QPainterPath, QPainter, QColor, QTransform, QPen, Qt
 
 from .shape import Shape
 from .shapes import get_shapes_dict
@@ -19,6 +19,7 @@ class Group(Shape):
 
     def add_shape(self, shape: Shape):
         shape.selected = False
+        shape.sticky = False
         self._max_x = max(shape.x, self._max_x)
         self._max_y = max(shape.y, self._max_y)
         self._min_x = min(shape.x, self._min_x)
@@ -48,6 +49,10 @@ class Group(Shape):
         if self.selected:
             painter.setPen(self._selected_border_color)
             painter.setBrush(self._selected_background_color)
+            painter.drawRect(self.bounding_rect)
+
+        if self._sticky:
+            painter.setPen(QPen(Qt.black, 4))
             painter.drawRect(self.bounding_rect)
 
     @staticmethod
